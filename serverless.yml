@@ -1,0 +1,102 @@
+
+service: cicd-aws
+
+plugins:
+  - serverless-webpack
+  - serverless-offline
+
+custom:
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  region: us-east-1
+  stage: ${opt:stage}
+  memorySize: 128
+  environment:
+    CUSTOMER_INFO: "customer-info"
+    IS_OFFLINE: ${opt:is-offline}
+    DB_ENDPOINT: ${file(./config/config.json):${self:provider.stage}.DB_ENDPOINT}
+    RESOURCE: ${file(./config/config.json):${self:provider.stage}.RESOURCE}
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "/customer-info"
+
+    - Effect: "Allow"
+      Action:
+        - lambda:InvokeFunction
+        - lambda:InvokeAsync
+      Resource: "arn:aws:lambda:us-east-1:*:*"
+
+functions:
+
+  #Customer CRUD
+  addCustomer:
+    name: ${opt:stage}-addCustomer
+    handler: src/customerCRUD.addCustomer
+    events:
+      - http:
+          path: addCustomer/{email}
+          method: POST
+          cors: true
+  
+  getCustomersList:
+    name: ${opt:stage}-getCustomersList
+    handler: src/customerCRUD.getCustomersList
+    events:
+      - http:
+          path: getCustomersList
+          method: GET
+          cors: true
+          
+  getCustomer:
+    name: ${opt:stage}-getCustomer
+    handler: src/customerCRUD.getCustomer
+    events:
+      - http:
+          path: getCustomer/{email}
+          method: GET
+          cors: true
+
+  #Image Apis
+  uploadImage:
+    name: ${opt:stage}-uploadImage
+    handler: src/fileUpload.imageUpload
+    events:
+      - http:
+          path: uploadImage
+          method: POST
+          cors: true
+
+  uploadImageByEmail:
+    name: ${opt:stage}-uploadImageByEmail
+    handler: src/fileUploadNewWay.uploadImage
+    events:
+      - http:
+          path: uploadImageByEmail/{email}/{filename}
+          method: POST
+          cors: true
+
+#Common functions:
+  dynamodb: 
+    name: ${opt:stage}-dynamodb
+    handler: common/dynamodb.dynamoDB
+
+  common:
+    name: ${opt:stage}-common
+    handler: common/common.common
+
+  statusCode:
+    name: ${opt:stage}-statusCode
+    handler: common/statusCode.StatusCode

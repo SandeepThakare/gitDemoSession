@@ -1,0 +1,18 @@
+{
+    "DEV": {
+        "DB_ENDPOINT": "http://localhost:8000",
+        "RESOURCE": "http://localhost:8000"
+    },
+    "STAGE": {
+        "DB_ENDPOINT": null,
+        "RESOURCE": "arn:aws:dynamodb:us-east-1:495730804023"
+    },
+    "PROD": {
+        "dialect": "postgres",
+        "username": "postgres",
+        "password": "root",
+        "database": "settlements_development",
+        "host": "192.168.40.132",
+        "port": "5432"
+    }
+}
